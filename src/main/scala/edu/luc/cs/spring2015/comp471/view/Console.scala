@@ -1,7 +1,11 @@
 package edu.luc.cs.spring2015.comp471.view
 
+import java.net.URL
+
 import edu.luc.cs.spring2015.comp471.model.DownloadManager
+import edu.luc.cs.spring2015.comp471.model.DownloadState.DownloadState
 import jline.console.ConsoleReader
+import scala.util.Try
 import scala.util.matching.Regex
 
 object Console {
@@ -20,16 +24,31 @@ object Console {
     } takeWhile {
       isValid((_:String))
     } foreach {
-      (s: String) => s match {
-        case "c"  => println("Hi from c")
-        case "l"  => {
-          downloadManager.getDownloads.foreach { tuple =>
-            showProgress(tuple._2, tuple._3)
+      (s: String) => {
+        if (!s.isEmpty)
+          s.charAt(0) match {
+            case 'c'  => {
+              downloadManager.cancel(Integer.valueOf(s.substring(2,3)))
+            }
+            case 'l'  => {
+              println("Download list:\n")
+              println("#ID State      Status")
+              downloadManager.getDownloads.foreach { tuple =>
+                showProgress(tuple._1, tuple._2, tuple._3, tuple._4)
+              }
+            }
+            case 'd'  => downloadManager.start(urlSample, "downloads/a.gz")
+            case 'p'  => downloadManager.purge()
+            case _    => {
+              val url = Try(new URL(s))
+              if (url.isFailure) {
+                println("Malformed URL!")
+              } else {
+                downloadManager.start( s,
+                  "downloads/" + s.substring(s.lastIndexOf('/'), s.length))
+              }
+            }
           }
-        }
-        case "d"  => downloadManager.start(urlSample, "/Users/sauloaguiar/Dropbox/LoyolaChicago/Classes/372-PL/homeworks/cs372s15p4/downloads/a.gz")
-        case _    => print("input: " + s)
-
       }
     }
     println()
@@ -38,29 +57,30 @@ object Console {
 
   def isValid(s: String): Boolean = !(s.equals("q"))
 
-  def showProgress(completed: Int, total: Int): Unit = {
-    val progress = setProgress(completed, total)
-    console.getCursorBuffer().clear()
-    console.getCursorBuffer().write("\nStatus: \n")
-    console.getCursorBuffer().write(progress)
-    console.setCursorPosition(console.getTerminal.getWidth)
-    console.redrawLine()
+  def showProgress(index: Int, completed: Int, total: Int, state: DownloadState): Unit = {
+    val progress = setProgress(index, completed, total, state)
+    println(progress)
   }
 
-  //100%[======================================>] 15,790      48.8K/s   in 0.3s
-  def setProgress(completed: Int, total: Int): String = {
-    val progress = (completed * 20) / total
+  //1: 100%[======================================>] 15,790      48.8K/s   in 0.3s
+  def setProgress(index:Int, completed: Int, total: Int, state: DownloadState): String = {
+    val w = console.getTerminal.getWidth - total.toString.length - 22
+    val progress = (completed.toDouble * w) / total
+
+    /*
+    #ID State       Status
+     0  InProgress  15% [=====> ]
+     */
     val buffer = new StringBuffer()
     val completeness = (completed.toDouble / total) * 100
-    buffer.append(EOL)
+    buffer.append(" " + index+ "  " + state + " ")
     buffer.append(completeness.toInt.toString)
     buffer.append("%")
     buffer.append("[")
-    buffer.append(fillProgress(progress))
-    buffer.append(fillEmpty(20-progress))
+    buffer.append(fillProgress(progress.toInt))
+    buffer.append(fillEmpty(w-progress.toInt))
     buffer.append("]")
     buffer.append(" " + total)
-    buffer.append(EOL)
     buffer.toString()
   }
 

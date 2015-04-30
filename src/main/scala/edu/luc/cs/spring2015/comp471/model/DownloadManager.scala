@@ -27,7 +27,7 @@ class DownloadManager() {
   def purge() =
     (0 until downloads.size).foreach {
       index => downloads(index).progress.getState match {
-        case DownloadState.InProgress | DownloadState.NotStarted => _
+        case DownloadState.InProgress | DownloadState.NotStarted =>
         case _ => downloads.remove(index)
       }
     }
