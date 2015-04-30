@@ -1,0 +1,21 @@
+Console App to Download files:
+	Functional Requirements:
+		- URL (starting with http://) starts downloading the resource in the background;
+		- l shows a numbered list of active and completed downloads with bytes read, total bytes, and percentage for each download;
+		- c <number> cancels the download with the given number;
+		- q quits the application;
+		<EXTRA>
+			- s <number> suspends the desired download;
+			- r <number> resumes the desired download;
+			- f <number> puts the desired download in the foreground (current download)
+			- b puts the current download in the background;
+			- x cancels the current download
+		</EXTRA>
+		- Notifications when:
+			- Download completed;
+			- Download failed;
+		- Error handling:
+			- Invalid input choice
+			- invalid URL
+			- resource not found at given URL
+
