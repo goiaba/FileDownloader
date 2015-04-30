@@ -8,60 +8,61 @@ import jline.console.ConsoleReader
 
 import scala.util.Try
 
-object Console {
+object Console extends App {
+
+  val CancelPattern = """^\s*([cC])\s+([0-9]+)\s*$""".r
+  val ListPattern = """^\s*([lL])\s*$""".r
+  val PurgePattern = """^\s*([pP])\s*$""".r
+  val HelpPattern = """^\s*([hH])\s*$""".r
+  val URLPattern = """^\s*(http.*)$""".r
 
   val console = new ConsoleReader
   val downloadManager = new DownloadManager
-  val downloadDir = scala.util.Properties.userDir
+  val downloadDir = scala.util.Properties.userHome
   val EOL = scala.util.Properties.lineSeparator
-  val urlSample = "http://mirrors.xmission.com/eclipse/technology/epp/downloads/release/kepler/SR2/eclipse-jee-kepler-SR2-macosx-cocoa-x86_64.tar.gz"
 
-  def main(args: Array[String]) = {
-    console.setPrompt("download> ")
-    printHelpMessage
-
-    Iterator continually {
-      console.readLine()
-    } takeWhile {
-      isValid
-    } foreach {
-      (s: String) => {
-        if (!s.isEmpty)
-          s.charAt(0) match {
-            case 'c'  => cancel(s)
-            case 'l'  => listAllDownloads(downloadManager.getDownloads)
-            case 'd'  => downloadManager.start(urlSample, downloadDir + "/eclipse-jee-kepler-SR2-macosx-cocoa-x86_64.tar.gz")
-            case 'p'  => downloadManager.purge()
-            case 'H'  => printHelpMessage
-            case _    => {
-              if (Try(new URL(s)).isFailure) println("Malformed URL!")
-              else {
-                val fileName = s.substring(s.lastIndexOf('/'), s.length)
-                downloadManager.start(s, downloadDir + fileName)
-              }
-            }
-          }
+  printHelpMessage
+  console.setPrompt("download> ")
+  Iterator continually {
+    console.readLine()
+  } takeWhile {
+    isValid
+  } foreach { (input: String) =>
+    input match {
+      case CancelPattern(command, index) => cancel(index.toInt)
+      case ListPattern(command) => listAllDownloads(downloadManager.getDownloads)
+      case PurgePattern(command) => downloadManager.purge()
+      case HelpPattern(command) => printHelpMessage
+      case URLPattern(url) =>
+        if (Try(new URL(url)).isSuccess) {
+          val fileName = url.substring(url.lastIndexOf('/'), url.length)
+          downloadManager.start(url, downloadDir + fileName)
+        } else
+          println("Please inform a valid URL")
+      case _ => {
+        printHelpMessage
+        println("Please inform a valid URL or one of the options.")
       }
     }
-    println()
   }
+  println()
 
-  def cancel(s: String) {
-    val c = downloadManager.cancel(Integer.valueOf(s.substring(2, 3)))
+  def cancel(index: Int) {
+    val c = downloadManager.cancel(index)
     if (c.isFailure) println(c)
   }
 
   def printHelpMessage {
-    println("Possible inputs:")
-    println("\tl : List downloads")
-    println("\tc <number> : Cancel download identified by <number> if it exists")
-    println("\tp : Remove all downloads from the list except those which state is InProgress or NotStarted")
-    println("\tH : Prints this help")
-    println("\tq : Exit\n")
+    println("\nPossible inputs:")
+    println("\tl: List downloads")
+    println("\tc <number>: Cancel download identified by <number> if it exists")
+    println("\tp: Remove all downloads from the list except those which state is InProgress or NotStarted")
+    println("\th: Prints this help")
+    println("\tq: Exit\n")
   }
 
   def listAllDownloads(list: List[(Int, Int, Option[Int], DownloadState)]): Unit = {
-    val separator = "=" * console.getTerminal.getWidth
+    val separator = "-" * console.getTerminal.getWidth
     println("\nDownload list")
     println(separator)
     println("#ID State      Status")
@@ -78,15 +79,15 @@ object Console {
   }
 
   //1: 100%[======================================>] 15,790      48.8K/s   in 0.3s
-  def setProgress(index:Int, completed: Int, total: Option[Int], state: DownloadState): String = {
+  def setProgress(index: Int, completed: Int, total: Option[Int], state: DownloadState): String = {
     val buffer = new StringBuffer()
-    val indexLength = 3
-    val stateLength = 10
-    val percentageLength = 3
+    val indexLength = 4
+    val stateLength = 11
+    val percentageLength = 5
     if (total.isDefined) {
       val totalGet = total.get
-      val totalLength = totalGet.toString.size
-      val w = console.getTerminal.getWidth - (indexLength + stateLength + percentageLength + totalLength*2)
+      val totalLength = totalGet.toString.size + 4
+      val w = console.getTerminal.getWidth - indexLength - stateLength - percentageLength - totalLength
       val completeness = (completed.toDouble / totalGet) * 100
       val progress = (completed.toDouble * w) / totalGet
       /*
@@ -100,14 +101,14 @@ object Console {
       buffer.append("]")
       buffer.append(" " + totalGet)
     } else {
-      buffer.append("%3d %-10s %s" format(index, state, "Unspecified length (Cannot print current status. Will print only state.)"))
+      buffer.append("%3d %-10s Unspecified content length (Bytes downloaded: %d)" format(index, state, completed))
     }
     buffer.toString()
   }
 
   def fillBar(completed: Int, char: String): StringBuffer = {
     val buffer = new StringBuffer()
-    (1 to (completed)) foreach { _ => buffer.append(char) }
+    (1 to (completed)) foreach { _ => buffer.append(char)}
     buffer
   }
 
@@ -119,7 +120,7 @@ object Console {
 
   def fillEmpty(amount: Int): String = {
     val buffer = fillBar(amount, " ")
-    buffer.toString 
+    buffer.toString
   }
 }
 
