@@ -5,5 +5,4 @@ import com.ning.http.client.{ListenableFuture, Response}
 /**
  * Created by bruno on 4/25/15.
  */
-class Download(val response: ListenableFuture[Response], val progress: ProgressTransferListener) {
-}
+case class Download(response: ListenableFuture[Response], progress: ProgressTransferListener)
