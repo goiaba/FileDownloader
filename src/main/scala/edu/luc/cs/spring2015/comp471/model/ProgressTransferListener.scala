@@ -11,7 +11,7 @@ import edu.luc.cs.spring2015.comp471.model.DownloadState.DownloadState
  */
 class ProgressTransferListener extends TransferListener {
 
-    private var totalBytes: Int = 0
+    private var totalBytes: Option[Int] = None
 
     private val bytesRead = new AtomicInteger(0)
 
@@ -25,14 +25,18 @@ class ProgressTransferListener extends TransferListener {
 
     def addBytesRead(current: Int) = bytesRead.addAndGet(current)
 
-    def getPercentage = util.Try(bytesRead.get() / totalBytes).getOrElse(0)
-
     def setState(downloadState: DownloadState) = this.state = downloadState
 
     override def onRequestHeadersSent(headers: FluentCaseInsensitiveStringsMap): Unit = ()
 
+    /*
+     * Content-Length is not mandatory and sometimes we cannot know in advance the file size
+     */
     override def onResponseHeadersReceived(headers: FluentCaseInsensitiveStringsMap): Unit = {
-        totalBytes = headers.getFirstValue("Content-Length").toInt
+        val contentLength = Some(headers.getFirstValue("Content-Length"))
+        if (contentLength.isDefined) {
+            totalBytes = Some(contentLength.get.toInt)
+        }
         state = DownloadState.InProgress
     }
 
