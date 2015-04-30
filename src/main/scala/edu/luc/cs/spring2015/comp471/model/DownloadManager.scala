@@ -1,4 +1,5 @@
-package edu.luc.cs.spring2015.comp471.model
+package edu.luc.cs.spring2015.comp471;
+package model;
 
 import scala.collection.mutable.ListBuffer
 

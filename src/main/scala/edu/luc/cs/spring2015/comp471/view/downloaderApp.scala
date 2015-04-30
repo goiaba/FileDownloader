@@ -5,7 +5,7 @@ import edu.luc.cs.spring2015.comp471.model.{DownloadManager, AsyncDownloader}
 /**
  * Created by bruno on 4/21/15.
  */
-object downloaderApp extends App {
+object downloaderApp {
 
   val longDownloadURL = "http://mirrors.xmission.com/eclipse/technology/epp/downloads/release/kepler/SR2/eclipse-jee-kepler-SR2-macosx-cocoa-x86_64.tar.gz"
   val localFileName = "/home/bruno/eclipse-jee-kepler-SR2-macosx-cocoa-x86_64.tar.gz"
