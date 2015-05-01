@@ -1,5 +1,7 @@
 package edu.luc.cs.spring2015.comp471.model
 
+import java.net.{MalformedURLException, URL}
+
 import edu.luc.cs.spring2015.comp471.model.DownloadState.DownloadState
 
 import scala.collection.mutable.ListBuffer
@@ -13,8 +15,15 @@ class DownloadManager() {
   private val downloads = ListBuffer[Download]()
   private val asyncDownloader = new AsyncDownloader
 
-  def start(url: String, file: String): Unit =
-    downloads += asyncDownloader.download(url, file)
+  def start(url: String, file: String): Unit = {
+    if (Try(new URL(url)).isFailure || (new URL(url).getHost.isEmpty)) {
+      throw new MalformedURLException
+    }
+    else {
+      downloads += asyncDownloader.download(url, file)
+    }
+  }
+
 
   def cancel(index: Int): Try[Boolean] = {
     executeOverDownloadsList(index) {

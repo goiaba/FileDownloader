@@ -1,6 +1,6 @@
 package edu.luc.cs.spring2015.comp471.view
 
-import java.net.URL
+import java.net.{MalformedURLException, URL}
 
 import edu.luc.cs.spring2015.comp471.model.DownloadManager
 import edu.luc.cs.spring2015.comp471.model.DownloadState._
@@ -36,7 +36,11 @@ object Console extends App {
       case URLPattern(url) =>
         if (Try(new URL(url)).isSuccess) {
           val fileName = url.substring(url.lastIndexOf('/'), url.length)
-          downloadManager.start(url, downloadDir + fileName)
+          try {
+            downloadManager.start(url, downloadDir + fileName)
+          } catch {
+            case e: MalformedURLException => println("Malformed URL!")
+          }
         } else
           println("Please inform a valid URL")
       case _ => {
