@@ -1,4 +1,4 @@
-A console application for initiating and managing concurrent web downloads.
+Description: A console application for initiating and managing concurrent web downloads.
 
 The goal is an understanding of:
 
